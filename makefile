@@ -8,7 +8,7 @@ INCDIR = include
 CC = cc
 
 # Define compilation flags
-CFLAGS = -I$(INCDIR)
+CFLAGS = -I $(INCDIR)
 
 # List of source files
 SRCFILES = $(SRCDIR)/main.c $(SRCDIR)/tarsau.c
@@ -25,6 +25,7 @@ $(OUTPUT): $(OBJFILES)
 
 # Rule to build object files
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c
+	@echo "Compiling $<..."
 	$(CC) -c $(CFLAGS) $< -o $@
 
 # Phony target to clean the project
