@@ -48,20 +48,22 @@ int main(int argc, char const *argv[])
     int j = 0;
     // Get all the input files
     int numOfFiles = 0;
+    int fileArgcEnd;
+    // determine end of files parameter
+
     for (int i = 2; i < argc; i++)
     {
         if (strcmp(argv[i], "-o") == 0)
-            break;
-        else
         {
-            if (checkFileExtension(argv[i]))
-            {
-                inputFiles[j] = argv[i];
-                numOfFiles++;
-            }
+            fileArgcEnd = i - 1;
+            break;
         }
+        inputFiles[j] = argv[i];
+        numOfFiles++;
         j++;
     }
+    checkFileExtension(fileArgcEnd, argv);
+
     int total = calculateTotalFileSize(inputFiles, numOfFiles);
     isAboveMaxFileCount(numOfFiles);
     isAboveMaxSize(total);
@@ -77,8 +79,9 @@ int main(int argc, char const *argv[])
     else
     {
         // create
-        const char *outputFileName = determineOutputFileName(argc, argv);
-        create(outputFileName, inputFiles, numOfFiles);
+
+        create(determineOutputFileName(argc, argv), inputFiles, numOfFiles);
     }
+
     return 0;
 }

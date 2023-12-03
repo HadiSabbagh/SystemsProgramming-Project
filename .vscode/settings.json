@@ -1,6 +1,9 @@
 {
     "files.associations": {
         "stdio.h": "c",
-        "tarsau.h": "c"
-    }
+        "tarsau.h": "c",
+        "types.h": "c",
+        "string.h": "c"
+    },
+    "cmake.sourceDirectory": "/mnt/s/NewStart/Obsidian/Memz/3rd year-1st term/Systems Programming/Project/bin"
 }
