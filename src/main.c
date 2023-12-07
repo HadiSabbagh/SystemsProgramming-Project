@@ -51,34 +51,45 @@ int main(int argc, char const *argv[])
     int fileArgcEnd;
     // determine end of files parameter
 
-    for (int i = 2; i < argc; i++)
-    {
-        if (strcmp(argv[i], "-o") == 0)
-        {
-            fileArgcEnd = i - 1;
-            break;
-        }
-        inputFiles[j] = argv[i];
-        numOfFiles++;
-        j++;
-    }
-    checkFileExtension(fileArgcEnd, argv);
-
-    int total = calculateTotalFileSize(inputFiles, numOfFiles);
-    isAboveMaxFileCount(numOfFiles);
-    isAboveMaxSize(total);
     if (strcmp(argv[1], "-a") == 0)
     {
         const char *archiveFileName = argv[2];
+        const char *directory = argv[3];
         // extract
         if (checkArchiveExtension(archiveFileName))
         {
             checkArchiveFile(archiveFileName);
         }
+        if(checkDirectory(directory))
+        {
+            beginExtract(archiveFileName,directory);
+        }
+        else
+        {
+            createDirectory(directory);
+            beginExtract(archiveFileName, directory);
+        }
     }
     else
     {
         // create
+        for (int i = 2; i < argc; i++)
+        {
+            if (strcmp(argv[i], "-o") == 0)
+            {
+                fileArgcEnd = i - 1;
+                break;
+            }
+            inputFiles[j] = argv[i];
+            numOfFiles++;
+            j++;
+        }
+
+        checkFileExtension(fileArgcEnd, argv);
+
+        int total = calculateTotalFileSize(inputFiles, numOfFiles);
+        isAboveMaxFileCount(numOfFiles);
+        isAboveMaxSize(total);
 
         create(determineOutputFileName(argc, argv), inputFiles, numOfFiles);
     }

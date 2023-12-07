@@ -11,7 +11,11 @@ char *determineOutputFileName(int argc, char const *argv[]);
 void checkArchiveFile(const char *filename);
 bool checkFileExtension(int fileArgcEnd, char const *argv[]);
 bool checkArchiveExtension(const char *filename);
-void extract(const char *archiveFileName, const char *directoryName);
+void createDirectory(const char *directory);
+bool checkDirectory(const char *directory);
+char *getText(const char *archiveFileName);
+void beginExtract(const char *archiveFileName, const char *directoryName);
+void writeExtract(char *filename, int permissions, int filesize, const char *text,  char *directoryName);
+int readFirstSectionBytes(const char *inputFiles[], int numOfFiles);
 void create(const char *outputFileName, const char *inputFiles[], int numOfFiles);
-
 #endif
