@@ -3,7 +3,8 @@
         "stdio.h": "c",
         "tarsau.h": "c",
         "types.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "fcntl.h": "c"
     },
     "cmake.sourceDirectory": "/mnt/s/NewStart/Obsidian/Memz/3rd year-1st term/Systems Programming/Project/bin"
 }

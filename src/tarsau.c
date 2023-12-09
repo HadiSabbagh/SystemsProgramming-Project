@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <limits.h>
 
-mode_t getPermissions(const char *filename)
+mode_t getFilePermissions(const char *filename)
 {
     struct stat fileStat;
     if (stat(filename, &fileStat) == -1)
@@ -21,7 +21,6 @@ mode_t getPermissions(const char *filename)
     }
     return fileStat.st_mode & 0777; // Extract the permission bits
 }
-
 off_t getFileSize(const char *filename)
 {
     struct stat fileStat;
@@ -32,8 +31,7 @@ off_t getFileSize(const char *filename)
     }
     return fileStat.st_size;
 }
-
-int calculateTotalFileSize(char *inputFiles[], int numOfFiles)
+int getTotalFileSize(char *inputFiles[], int numOfFiles)
 {
     int size = 0;
     for (int i = 0; i < numOfFiles; i++)
@@ -118,7 +116,7 @@ void createDirectory(const char *directory)
         mkdir(directory, 0700);
     }
 }
-bool checkDirectory(const char *directory)
+void checkForCurrentDirectory(const char *directory)
 {
     char cwd[100]; // Max path length to check for
     if (getcwd(cwd, sizeof(cwd)) != NULL)
@@ -130,7 +128,9 @@ bool checkDirectory(const char *directory)
             exit(1);
         }
     }
-
+}
+bool checkDirectory(const char *directory)
+{
     DIR *dir = opendir(directory);
     if (dir)
     {
@@ -143,46 +143,66 @@ bool checkDirectory(const char *directory)
         return false;
     }
 }
-void writeExtract(char *filename, int permissions, int filesize, const char *text, char *directoryName)
+void extractFile(char *filename, int permissions, int filesize, char *text, const char *directoryName)
 {
     // Write File Content
-    char path[strlen(directoryName) + strlen(filename) + 2];
-    snprintf(path, sizeof(path), "%s/%s", directoryName, filename);
-    printf("%s\n", path);
+    char *path = malloc(strlen(directoryName) + strlen(filename) + 3);
+    if (path == NULL)
+    {
+        fprintf(stderr, "Memory allocation failure\n");
+        return;
+    }
+
+    snprintf(path, strlen(directoryName) + strlen(filename) + 2, "%s/%s", directoryName, filename);
+    printf("path: %s\n \n", path);
 
     FILE *inputFile = fopen(path, "w");
     if (inputFile == NULL)
     {
-        printf("Error opening input file: %s", filename);
+        printf("Error opening input file: %s\n", filename);
         exit(1);
     }
     static int i = 0;
     int endOfSequence = i + filesize;
-    while (i < endOfSequence)
+    while (i < endOfSequence && text != NULL && i < strlen(text))
     {
         int ascii = text[i];
         char txt = ascii;
         fwrite(&txt, 1, 1, inputFile);
         i++;
     }
-    fclose(inputFile);
-
-    /* if (chmod(path, resolvePermissions(permissions)) == 0)
+    // Convert int permissions to string.
+    char *permissionsString = malloc(sizeof(char) * 8);
+    if (permissionsString == NULL)
     {
-        printf("successfully set permissions");
-    } */
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(1);
+    }
+    sprintf(permissionsString, "0%d", permissions);
+
+    // Convert permissionString to mode_t
+    mode_t mode = (mode_t)(strtoul(permissionsString, NULL, 8));
+
+    // Set permissions and free permissionsString;
+    chmod(path, mode);
+    free(permissionsString);
+    free(path);
+    fclose(inputFile);
 }
-int readFirstSectionBytes(const char *inputFiles[], int numOfFiles)
+int getMetaDataLength(const char *inputFiles[], int numOfFiles)
 {
     int byteSize = 0;
+    int amount_of_pipes = numOfFiles * 2 - numOfFiles + 1;
     for (int i = 0; i < numOfFiles; i++)
     {
-        byteSize += snprintf(NULL, 0, "|%s,%o,%ld|", inputFiles[i], getPermissions(inputFiles[i]), getFileSize(inputFiles[i]));
+        byteSize += snprintf(NULL, 0, "%s,%o,%ld", inputFiles[i], getFilePermissions(inputFiles[i]), getFileSize(inputFiles[i]));
     }
-    return byteSize;
+
+    return byteSize + amount_of_pipes;
 }
-char *getText(const char *archiveFileName)
+char *getArchivedText(const char *archiveFileName)
 {
+
     char path[100];
     snprintf(path, sizeof(path), "%s", archiveFileName);
 
@@ -198,21 +218,24 @@ char *getText(const char *archiveFileName)
     char *filename;
     int permissions;
     int filesize;
-
+    char *text = malloc(getFileSize(archiveFileName));
     while (fgets(line, totalSize + 1, outputFile) != NULL)
     {
         char *strtok_res = strtok(line, "|");
-
         int sectionSize = atoi(strtok_res);
-        while (strtok_res != NULL && sectionSize != 0)
+        //  printf("%d section size\n", sectionSize);
+        int sizeOfContent = 2; // pipe char for each file description
+        while (strtok_res != NULL && sectionSize > 0)
         {
+
             // Extracting filename
             filename = strtok(NULL, ",");
             if (filename == NULL)
             {
                 break;
             }
-
+            //  printf("Filename: %s\n", filename);
+            sizeOfContent += sizeof(strtok_res) / sizeof(char) + 1;
             // Extracting permissions
             strtok_res = strtok(NULL, ",");
             if (strtok_res == NULL)
@@ -220,7 +243,9 @@ char *getText(const char *archiveFileName)
                 break;
             }
             permissions = atoi(strtok_res);
+            // printf("Permissions: %d\n", permissions);
 
+            sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
             // Extracting filesize
             strtok_res = strtok(NULL, "|");
             if (strtok_res == NULL)
@@ -228,30 +253,25 @@ char *getText(const char *archiveFileName)
                 break;
             }
             filesize = atoi(strtok_res);
-            sectionSize = sectionSize - sizeof(filename) - sizeof(permissions) - sizeof(filesize);
-            // printf("Calling writeExtract \n");
-            // writeExtract(filename, permissions, filesize, directoryName);
-        }
+            // printf("Filesize: %d\n", filesize);
 
-        strtok_res = strtok(NULL, "|");
-        if (strtok_res == NULL)
-        {
-            break;
+            sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
+
+            // printf("size of content: %d\n", sizeOfContent);
+
+            // printf("Calling writeExtract \n");
+            sectionSize -= sizeOfContent;
+            // printf("%d section size\n", sectionSize);
+            sizeOfContent = 0;
+            strtok_res = strtok(NULL, "|");
         }
-        char *text = malloc(sizeof(strtok_res));
-        if (text == NULL)
-        {
-            printf("Failed to allocate text");
-            exit(1);
-        }
-        text[0] = '\0';
-        strcat(text, strtok_res);
-        return text;
+        printf("Text: %s\n", strtok_res);
+        return strtok_res;
     }
 }
-void beginExtract(const char *archiveFileName, const char *directoryName)
+void readAndTokenize(const char *archiveFileName, const char *directoryName)
 {
-    char path[100];
+    char path[1000];
     snprintf(path, sizeof(path), "%s", archiveFileName);
 
     FILE *outputFile = fopen(path, "r");
@@ -266,14 +286,17 @@ void beginExtract(const char *archiveFileName, const char *directoryName)
     char *filename;
     int permissions;
     int filesize;
-    char *text = getText(archiveFileName);
-
+    char *text = malloc(getFileSize(archiveFileName));
+    strcpy(text, getArchivedText(archiveFileName));
     while (fgets(line, totalSize + 1, outputFile) != NULL)
     {
         char *strtok_res = strtok(line, "|");
         int sectionSize = atoi(strtok_res);
-        while (strtok_res != NULL && sectionSize != 0)
+        //  printf("%d section size\n", sectionSize);
+        int sizeOfContent = 2; // pipe char for each file description
+        while (strtok_res != NULL && sectionSize > 0)
         {
+
             // Extracting filename
             filename = strtok(NULL, ",");
             if (filename == NULL)
@@ -281,7 +304,7 @@ void beginExtract(const char *archiveFileName, const char *directoryName)
                 break;
             }
             printf("Filename: %s\n", filename);
-
+            sizeOfContent += sizeof(strtok_res) / sizeof(char) + 1;
             // Extracting permissions
             strtok_res = strtok(NULL, ",");
             if (strtok_res == NULL)
@@ -291,6 +314,7 @@ void beginExtract(const char *archiveFileName, const char *directoryName)
             permissions = atoi(strtok_res);
             printf("Permissions: %d\n", permissions);
 
+            sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
             // Extracting filesize
             strtok_res = strtok(NULL, "|");
             if (strtok_res == NULL)
@@ -299,15 +323,22 @@ void beginExtract(const char *archiveFileName, const char *directoryName)
             }
             filesize = atoi(strtok_res);
             printf("Filesize: %d\n", filesize);
-            sectionSize = sectionSize - sizeof(filename) - sizeof(permissions) - sizeof(filesize);
-            // printf("Calling writeExtract \n");
 
-            writeExtract(filename, permissions, filesize, text, directoryName);
+            sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
+
+            // printf("size of content: %d\n", sizeOfContent);
+
+            // printf("Calling writeExtract \n");
+            sectionSize -= sizeOfContent;
+            // printf("%d section size\n", sectionSize);
+            sizeOfContent = 0;
+
+            extractFile(filename, permissions, filesize, text, directoryName);
         }
     }
-    free(text);
+    
 }
-void create(const char *outputFileName, const char *inputFiles[], int numOfFiles)
+void createArchive(const char *outputFileName, const char *inputFiles[], int numOfFiles)
 {
     char path[100];
     snprintf(path, sizeof(path), "%s", outputFileName);
@@ -320,17 +351,17 @@ void create(const char *outputFileName, const char *inputFiles[], int numOfFiles
     }
 
     // Get byte size of the first section
-    int byteSize = readFirstSectionBytes(inputFiles, numOfFiles);
+    int byteSize = getMetaDataLength(inputFiles, numOfFiles);
 
     // Write File Information (Size of first section)
     fprintf(outputFile, "%010d", byteSize);
-
+    fprintf(outputFile, "|");
     // Write File Information (Name of file, permissions of file, size of file)
     for (int i = 0; i < numOfFiles; i++)
     {
-        fprintf(outputFile, "|%s,%o,%ld", inputFiles[i], getPermissions(inputFiles[i]), getFileSize(inputFiles[i]));
+        fprintf(outputFile, "%s,%o,%ld|", inputFiles[i], getFilePermissions(inputFiles[i]), getFileSize(inputFiles[i]));
     }
-    fprintf(outputFile, "|");
+    // fprintf(outputFile, "|");
 
     // Write File Content
     for (int i = 0; i < numOfFiles; i++)

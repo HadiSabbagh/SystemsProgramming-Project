@@ -43,36 +43,39 @@ void checkArgs(int argc, char const *argv[])
 
 int main(int argc, char const *argv[])
 {
-    checkArgs(argc, argv);
+    checkArgs(argc, argv); // Check for valid arguments. Quits if invalid arguments were received.
+
+    // Driver coded
     char *inputFiles[MAX_FILE_COUNT];
-    int j = 0;
-    // Get all the input files
     int numOfFiles = 0;
     int fileArgcEnd;
-    // determine end of files parameter
 
-    if (strcmp(argv[1], "-a") == 0)
+    // Determine operation.
+    // Setup parameters for operation.
+
+    if (strcmp(argv[1], "-a") == 0) // Extraction
     {
         const char *archiveFileName = argv[2];
         const char *directory = argv[3];
-        // extract
+
         if (checkArchiveExtension(archiveFileName))
         {
             checkArchiveFile(archiveFileName);
         }
-        if(checkDirectory(directory))
+        if (checkDirectory(directory))
         {
-            beginExtract(archiveFileName,directory);
+            readAndTokenize(archiveFileName, directory);
         }
         else
         {
+            checkForCurrentDirectory(directory);
             createDirectory(directory);
-            beginExtract(archiveFileName, directory);
+            readAndTokenize(archiveFileName, directory);
         }
     }
-    else
+    else // Creation
     {
-        // create
+        int j = 0;
         for (int i = 2; i < argc; i++)
         {
             if (strcmp(argv[i], "-o") == 0)
@@ -86,12 +89,11 @@ int main(int argc, char const *argv[])
         }
 
         checkFileExtension(fileArgcEnd, argv);
-
-        int total = calculateTotalFileSize(inputFiles, numOfFiles);
+        int total = getTotalFileSize(inputFiles, numOfFiles);
         isAboveMaxFileCount(numOfFiles);
         isAboveMaxSize(total);
 
-        create(determineOutputFileName(argc, argv), inputFiles, numOfFiles);
+        createArchive(determineOutputFileName(argc, argv), inputFiles, numOfFiles);
     }
 
     return 0;
