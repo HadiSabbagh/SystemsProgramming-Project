@@ -154,7 +154,7 @@ void extractFile(char *filename, int permissions, int filesize, char *text, cons
     }
 
     snprintf(path, strlen(directoryName) + strlen(filename) + 2, "%s/%s", directoryName, filename);
-    printf("path: %s\n \n", path);
+   // printf("path: %s\n \n", path);
 
     FILE *inputFile = fopen(path, "w");
     if (inputFile == NULL)
@@ -265,7 +265,7 @@ char *getArchivedText(const char *archiveFileName)
             sizeOfContent = 0;
             strtok_res = strtok(NULL, "|");
         }
-        printf("Text: %s\n", strtok_res);
+        //printf("Text: %s\n", strtok_res);
         return strtok_res;
     }
 }
@@ -303,7 +303,7 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
             {
                 break;
             }
-            printf("Filename: %s\n", filename);
+            //printf("Filename: %s\n", filename);
             sizeOfContent += sizeof(strtok_res) / sizeof(char) + 1;
             // Extracting permissions
             strtok_res = strtok(NULL, ",");
@@ -312,7 +312,7 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
                 break;
             }
             permissions = atoi(strtok_res);
-            printf("Permissions: %d\n", permissions);
+            //printf("Permissions: %d\n", permissions);
 
             sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
             // Extracting filesize
@@ -322,7 +322,7 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
                 break;
             }
             filesize = atoi(strtok_res);
-            printf("Filesize: %d\n", filesize);
+            //printf("Filesize: %d\n", filesize);
 
             sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
 
