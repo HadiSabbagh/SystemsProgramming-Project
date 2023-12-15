@@ -88,7 +88,7 @@ bool checkFileExtension(int fileArgcEnd, char const *argv[])
             exit(1);
         }
 
-        if (strcmp(fileExtension, ".txt") != 0)
+        if (strcmp(fileExtension, ".txt") != 0 && strcmp(fileExtension, ".dat") !=0 )
         {
             printf("Error: %s input file format is incompatible! \n", argv[i]);
             exit(1);
