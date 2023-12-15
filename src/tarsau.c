@@ -73,28 +73,24 @@ void checkArchiveFile(const char *filename)
         exit(1);
     }
 }
-bool checkFileExtension(int fileArgcEnd, char const *argv[])
+bool checkFileExtension(const char *filename)
 {
-    for (int i = 2; i <= fileArgcEnd; i++)
+    int character;
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
     {
-        const char *fileExtension;
-        if ((strrchr(argv[i], '.')) != 0)
+        perror("Error opening input file");
+        exit(1);
+    }
+    while ((character = fgetc(file)) != EOF) // Check if each character in the file is an ASCII character
+    {
+        if (character < 0 || character > 127) // Outside a-z and A-Z.
         {
-            fileExtension = strrchr(argv[i], '.');
-        }
-        else
-        {
-            printf("Error: %s input file format is incompatible! \n", argv[i]);
-            exit(1);
-        }
-
-        if (strcmp(fileExtension, ".txt") != 0 && strcmp(fileExtension, ".dat") !=0 )
-        {
-            printf("Error: %s input file format is incompatible! \n", argv[i]);
-            exit(1);
+            fclose(file);
+            return false;
         }
     }
-
+    fclose(file);
     return true;
 }
 bool checkArchiveExtension(const char *filename)
@@ -154,7 +150,7 @@ void extractFile(char *filename, int permissions, int filesize, char *text, cons
     }
 
     snprintf(path, strlen(directoryName) + strlen(filename) + 2, "%s/%s", directoryName, filename);
-   // printf("path: %s\n \n", path);
+    // printf("path: %s\n \n", path);
 
     FILE *inputFile = fopen(path, "w");
     if (inputFile == NULL)
@@ -265,7 +261,7 @@ char *getArchivedText(const char *archiveFileName)
             sizeOfContent = 0;
             strtok_res = strtok(NULL, "|");
         }
-        //printf("Text: %s\n", strtok_res);
+        // printf("Text: %s\n", strtok_res);
         return strtok_res;
     }
 }
@@ -303,7 +299,7 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
             {
                 break;
             }
-            //printf("Filename: %s\n", filename);
+            // printf("Filename: %s\n", filename);
             sizeOfContent += sizeof(strtok_res) / sizeof(char) + 1;
             // Extracting permissions
             strtok_res = strtok(NULL, ",");
@@ -312,7 +308,7 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
                 break;
             }
             permissions = atoi(strtok_res);
-            //printf("Permissions: %d\n", permissions);
+            // printf("Permissions: %d\n", permissions);
 
             sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
             // Extracting filesize
@@ -322,7 +318,7 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
                 break;
             }
             filesize = atoi(strtok_res);
-            //printf("Filesize: %d\n", filesize);
+            // printf("Filesize: %d\n", filesize);
 
             sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
 
@@ -336,7 +332,6 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
             extractFile(filename, permissions, filesize, text, directoryName);
         }
     }
-    
 }
 void createArchive(const char *outputFileName, const char *inputFiles[], int numOfFiles)
 {

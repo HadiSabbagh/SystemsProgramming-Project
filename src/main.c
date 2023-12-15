@@ -84,11 +84,12 @@ int main(int argc, char const *argv[])
                 break;
             }
             inputFiles[j] = argv[i];
+            checkFileExtension(argv[i]);
             numOfFiles++;
             j++;
         }
 
-        checkFileExtension(fileArgcEnd, argv);
+        
         int total = getTotalFileSize(inputFiles, numOfFiles);
         isAboveMaxFileCount(numOfFiles);
         isAboveMaxSize(total);

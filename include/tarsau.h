@@ -9,7 +9,7 @@ off_t getFileSize(const char *filename);                                        
 int getTotalFileSize(char *inputFiles[], int numOfFiles);                                               // Calculate total file size to check for MAX_TOTAL_SIZE (main.c)
 char *determineOutputFileName(int argc, char const *argv[]);                                            // Determine whether to use a user-given parameter as the file name or use the default (a.sau)
 void checkArchiveFile(const char *filename);                                                            // Tries to open the archive file.
-bool checkFileExtension(int fileArgcEnd, char const *argv[]);                                           // Checks for all input files for valid extensions(must be .txt).
+bool checkFileExtension(const char *filename);                                                          // Checks if the file is an ASCII text file.
 bool checkArchiveExtension(const char *filename);                                                       // Checks archive file's extension(must be .sau).
 void checkForCurrentDirectory(const char *directory);                                                   // Checks whether the user has supplied the executable's directory as a directory for extraction. (Not allowed)
 bool checkDirectory(const char *directory);                                                             // Checks whether a directory exists or not.
