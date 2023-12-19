@@ -79,7 +79,7 @@ bool checkFileExtension(const char *filename)
     FILE *file = fopen(filename, "r");
     if (file == NULL)
     {
-        perror("Error opening input file");
+        printf("Error opening input file %s\n", filename);
         exit(1);
     }
     while ((character = fgetc(file)) != EOF) // Check if each character in the file is an ASCII character
@@ -146,7 +146,7 @@ void extractFile(char *filename, int permissions, int filesize, char *text, cons
     if (path == NULL)
     {
         fprintf(stderr, "Memory allocation failure\n");
-        return;
+        exit(1);
     }
 
     snprintf(path, strlen(directoryName) + strlen(filename) + 2, "%s/%s", directoryName, filename);
@@ -171,7 +171,7 @@ void extractFile(char *filename, int permissions, int filesize, char *text, cons
     char *permissionsString = malloc(sizeof(char) * 8);
     if (permissionsString == NULL)
     {
-        fprintf(stderr, "Memory allocation failed\n");
+        printf("Memory allocation for permission string failed \n");
         exit(1);
     }
     sprintf(permissionsString, "0%d", permissions);
@@ -184,6 +184,7 @@ void extractFile(char *filename, int permissions, int filesize, char *text, cons
     free(permissionsString);
     free(path);
     fclose(inputFile);
+    printf("%s , ", filename);
 }
 int getMetaDataLength(const char *inputFiles[], int numOfFiles)
 {
@@ -215,6 +216,11 @@ char *getArchivedText(const char *archiveFileName)
     int permissions;
     int filesize;
     char *text = malloc(getFileSize(archiveFileName));
+    if (text == NULL)
+    {
+        printf("No text section was found\n");
+        exit(1);
+    }
     while (fgets(line, totalSize + 1, outputFile) != NULL)
     {
         char *strtok_res = strtok(line, "|");
@@ -231,7 +237,7 @@ char *getArchivedText(const char *archiveFileName)
                 break;
             }
             //  printf("Filename: %s\n", filename);
-            sizeOfContent += sizeof(strtok_res) / sizeof(char) + 1;
+            sizeOfContent += sizeof(strtok_res) / sizeof(char);
             // Extracting permissions
             strtok_res = strtok(NULL, ",");
             if (strtok_res == NULL)
@@ -241,7 +247,7 @@ char *getArchivedText(const char *archiveFileName)
             permissions = atoi(strtok_res);
             // printf("Permissions: %d\n", permissions);
 
-            sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
+            sizeOfContent += sizeof(strtok_res) / sizeof(int);
             // Extracting filesize
             strtok_res = strtok(NULL, "|");
             if (strtok_res == NULL)
@@ -251,7 +257,7 @@ char *getArchivedText(const char *archiveFileName)
             filesize = atoi(strtok_res);
             // printf("Filesize: %d\n", filesize);
 
-            sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
+            sizeOfContent += sizeof(strtok_res) / sizeof(int);
 
             // printf("size of content: %d\n", sizeOfContent);
 
@@ -288,7 +294,7 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
     {
         char *strtok_res = strtok(line, "|");
         int sectionSize = atoi(strtok_res);
-        //  printf("%d section size\n", sectionSize);
+        // printf("%d section size\n", sectionSize);
         int sizeOfContent = 2; // pipe char for each file description
         while (strtok_res != NULL && sectionSize > 0)
         {
@@ -300,7 +306,7 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
                 break;
             }
             // printf("Filename: %s\n", filename);
-            sizeOfContent += sizeof(strtok_res) / sizeof(char) + 1;
+            sizeOfContent += sizeof(strtok_res) / sizeof(char);
             // Extracting permissions
             strtok_res = strtok(NULL, ",");
             if (strtok_res == NULL)
@@ -310,7 +316,7 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
             permissions = atoi(strtok_res);
             // printf("Permissions: %d\n", permissions);
 
-            sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
+            sizeOfContent += sizeof(strtok_res) / sizeof(int);
             // Extracting filesize
             strtok_res = strtok(NULL, "|");
             if (strtok_res == NULL)
@@ -320,15 +326,15 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
             filesize = atoi(strtok_res);
             // printf("Filesize: %d\n", filesize);
 
-            sizeOfContent += sizeof(strtok_res) / sizeof(int) + 1;
+            sizeOfContent += sizeof(strtok_res) / sizeof(int);
 
             // printf("size of content: %d\n", sizeOfContent);
 
-            // printf("Calling writeExtract \n");
             sectionSize -= sizeOfContent;
             // printf("%d section size\n", sectionSize);
             sizeOfContent = 0;
 
+            // printf("Calling writeExtract \n");
             extractFile(filename, permissions, filesize, text, directoryName);
         }
     }
@@ -377,4 +383,5 @@ void createArchive(const char *outputFileName, const char *inputFiles[], int num
         fclose(inputFile);
     }
     fclose(outputFile);
+    printf("The files have been merged successfully.\n");
 }

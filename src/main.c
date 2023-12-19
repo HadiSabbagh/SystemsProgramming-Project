@@ -72,6 +72,7 @@ int main(int argc, char const *argv[])
             createDirectory(directory);
             readAndTokenize(archiveFileName, directory);
         }
+        printf("files were extracted successfully in %s.\n", directory);
     }
     else // Creation
     {
@@ -89,7 +90,6 @@ int main(int argc, char const *argv[])
             j++;
         }
 
-        
         int total = getTotalFileSize(inputFiles, numOfFiles);
         isAboveMaxFileCount(numOfFiles);
         isAboveMaxSize(total);

@@ -17,7 +17,7 @@ SRCFILES = $(SRCDIR)/main.c $(SRCDIR)/tarsau.c
 OBJFILES = $(BUILDDIR)/main.o $(BUILDDIR)/tarsau.o
 
 # Output executable
-OUTPUT = $(BINDIR)/app
+OUTPUT = $(BINDIR)/tarsau
 
 # Rule to build the executable
 $(OUTPUT): $(OBJFILES)
