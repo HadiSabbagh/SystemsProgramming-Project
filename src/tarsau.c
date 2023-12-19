@@ -36,18 +36,8 @@ int getTotalFileSize(char *inputFiles[], int numOfFiles)
     int size = 0;
     for (int i = 0; i < numOfFiles; i++)
     {
-        /* // opening the file in read mode and calculate size
-        FILE *fp = fopen(inputFiles[i], "r");
-        if (fp == NULL)
-        {
-            printf("File Not Found! %s\n", inputFiles[i]);
-            exit(1);
-        }
-        fseek(fp, 0L, SEEK_END);
-        long int res = ftell(fp);
-        size += res;
-        fclose(fp); */
-        size = getFileSize(inputFiles[i]);
+
+        size += getFileSize(inputFiles[i]);
     }
     return size;
 }
