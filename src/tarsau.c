@@ -36,7 +36,7 @@ int getTotalFileSize(char *inputFiles[], int numOfFiles)
     int size = 0;
     for (int i = 0; i < numOfFiles; i++)
     {
-        // opening the file in read mode and calculate size
+        /* // opening the file in read mode and calculate size
         FILE *fp = fopen(inputFiles[i], "r");
         if (fp == NULL)
         {
@@ -46,7 +46,8 @@ int getTotalFileSize(char *inputFiles[], int numOfFiles)
         fseek(fp, 0L, SEEK_END);
         long int res = ftell(fp);
         size += res;
-        fclose(fp);
+        fclose(fp); */
+        size = getFileSize(inputFiles[i]);
     }
     return size;
 }
@@ -73,15 +74,20 @@ void checkArchiveFile(const char *filename)
         exit(1);
     }
 }
+FILE *getOpenFile(const char *filename, const char *mode)
+{
+    FILE *fp = fopen(filename, mode);
+    if (fp == NULL)
+    {
+        printf("Error opening file %s with mode %s \n", filename, mode);
+        exit(1);
+    }
+    return fp;
+}
 bool checkFileExtension(const char *filename)
 {
     int character;
-    FILE *file = fopen(filename, "r");
-    if (file == NULL)
-    {
-        printf("Error opening input file %s\n", filename);
-        exit(1);
-    }
+    FILE *file = getOpenFile(filename, "r");
     while ((character = fgetc(file)) != EOF) // Check if each character in the file is an ASCII character
     {
         if (character < 0 || character > 127) // Outside a-z and A-Z.
@@ -152,12 +158,7 @@ void extractFile(char *filename, int permissions, int filesize, char *text, cons
     snprintf(path, strlen(directoryName) + strlen(filename) + 2, "%s/%s", directoryName, filename);
     // printf("path: %s\n \n", path);
 
-    FILE *inputFile = fopen(path, "w");
-    if (inputFile == NULL)
-    {
-        printf("Error opening input file: %s\n", filename);
-        exit(1);
-    }
+    FILE *inputFile = getOpenFile(path, "w");
     static int i = 0;
     int endOfSequence = i + filesize;
     while (i < endOfSequence && text != NULL && i < strlen(text))
@@ -200,10 +201,7 @@ int getMetaDataLength(const char *inputFiles[], int numOfFiles)
 char *getArchivedText(const char *archiveFileName)
 {
 
-    char path[100];
-    snprintf(path, sizeof(path), "%s", archiveFileName);
-
-    FILE *outputFile = fopen(path, "r");
+    FILE *outputFile = getOpenFile(archiveFileName, "r");
     if (outputFile == NULL)
     {
         printf("Error opening achive file");
@@ -273,15 +271,8 @@ char *getArchivedText(const char *archiveFileName)
 }
 void readAndTokenize(const char *archiveFileName, const char *directoryName)
 {
-    char path[1000];
-    snprintf(path, sizeof(path), "%s", archiveFileName);
 
-    FILE *outputFile = fopen(path, "r");
-    if (outputFile == NULL)
-    {
-        printf("Error opening achive file");
-        exit(1);
-    }
+    FILE *outputFile = getOpenFile(archiveFileName, "r");
 
     int totalSize = getFileSize(archiveFileName);
     char line[totalSize];
@@ -294,11 +285,9 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
     {
         char *strtok_res = strtok(line, "|");
         int sectionSize = atoi(strtok_res);
-        // printf("%d section size\n", sectionSize);
         int sizeOfContent = 2; // pipe char for each file description
         while (strtok_res != NULL && sectionSize > 0)
         {
-
             // Extracting filename
             filename = strtok(NULL, ",");
             if (filename == NULL)
@@ -314,7 +303,6 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
                 break;
             }
             permissions = atoi(strtok_res);
-            // printf("Permissions: %d\n", permissions);
 
             sizeOfContent += sizeof(strtok_res) / sizeof(int);
             // Extracting filesize
@@ -324,32 +312,18 @@ void readAndTokenize(const char *archiveFileName, const char *directoryName)
                 break;
             }
             filesize = atoi(strtok_res);
-            // printf("Filesize: %d\n", filesize);
-
             sizeOfContent += sizeof(strtok_res) / sizeof(int);
-
-            // printf("size of content: %d\n", sizeOfContent);
-
             sectionSize -= sizeOfContent;
-            // printf("%d section size\n", sectionSize);
             sizeOfContent = 0;
 
-            // printf("Calling writeExtract \n");
             extractFile(filename, permissions, filesize, text, directoryName);
         }
     }
 }
 void createArchive(const char *outputFileName, const char *inputFiles[], int numOfFiles)
 {
-    char path[100];
-    snprintf(path, sizeof(path), "%s", outputFileName);
 
-    FILE *outputFile = fopen(path, "w");
-    if (outputFile == NULL)
-    {
-        printf("Error opening output file");
-        exit(1);
-    }
+    FILE *outputFile = getOpenFile(outputFileName, "w");
 
     // Get byte size of the first section
     int byteSize = getMetaDataLength(inputFiles, numOfFiles);
@@ -367,12 +341,7 @@ void createArchive(const char *outputFileName, const char *inputFiles[], int num
     // Write File Content
     for (int i = 0; i < numOfFiles; i++)
     {
-        FILE *inputFile = fopen(inputFiles[i], "r");
-        if (inputFile == NULL)
-        {
-            printf("Error opening input file: %s", inputFiles[i]);
-            exit(1);
-        }
+        FILE *inputFile = getOpenFile(inputFiles[i], "r");
         char buffer[50];
         size_t bytesRead;
 

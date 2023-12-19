@@ -60,7 +60,7 @@ int main(int argc, char const *argv[])
 
         if (checkArchiveExtension(archiveFileName))
         {
-            checkArchiveFile(archiveFileName);
+            getOpenFile(archiveFileName, "r");
         }
         if (checkDirectory(directory))
         {
